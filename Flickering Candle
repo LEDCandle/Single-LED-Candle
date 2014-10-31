@@ -1,0 +1,179 @@
+/*THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE. */
+
+int ledPin[]={3,5,6}; //Output Pins for the Yellow LEDs
+int ledOut_Raw1=0; //Raw random value, final output level of up/down fade
+int ledOut_Raw2=0;
+int ledOut_Raw3=0;
+int ledOut_Final1=0; //Output level of LED, divided into steps for smooth fade
+int ledOut_Final2=0;
+int ledOut_Final3=0;
+int ledOut_Step1=0; //Amount of Increase/decrease for each step of the PWM fade (for loop)
+int ledOut_Step2=0;
+int ledOut_Step3=0;
+int pwmStep=0; //number of steps in each light output change of yellow LEDs
+int sampleVal1; // Used to "debounce" the wind sensor and detect quick changes
+int sampleVal2;
+byte flameState; //currently used to ensure candle remains off when blown out, but is also able to be reset via digital input switch (lighterPin)
+//Below are the variables for using temperature for flame detection 
+int temp1=0; //first temp reading
+int temp2=0; //second temp reading
+int temp3=0; //third temp reading
+int temp4=0; //fourth temp reading
+boolean ledState=false;
+
+
+void setup(){
+for(int z=0; z <=4; z++){  
+  pinMode(ledPin[z],OUTPUT); //setups up output pins for yellow LEDs
+}
+flameState = 0; //ensures candle can be lit at startup
+}
+
+void loop(){
+//First checks if the candle is READY to be reset and/or if the Digital Switch (lighterPin) is on or off.
+//IF1 checks to see if Switch is on AND candle is not blown out, if both are TRUE the following is executed
+//If [IF1} is FLALSE (candle has been blown out) execute the following:
+if(flameState == 0){
+  flameDetection();
+
+}
+else if(flameState == 1){ //takes two readings of the wind sensor for "rate of change" detection/debouncing 
+  sampleVal1 = analogRead(0);
+  delay(1);
+  sampleVal2 = analogRead(0);
+  
+  //MUST Check to see if candle has been blown out FIRST, if false, then check if it is at rest or flickering strongly 
+  
+  if(sampleVal1 > 235 && sampleVal2 > 235){ //values were 280 and I was relativly happy with that
+    for(int i = 0; i <=2; i++){
+      digitalWrite(ledPin[i], LOW); //If both readings exceed threshold turn off all 3 LED pins
+    }
+    flameState = 0;
+    delay(3000);
+    }
+    
+  else if(sampleVal1 <= 90){ //if wind sensor reads below threshold, call function for an "at rest" flame
+    atRest();
+  }
+  
+  else{
+    stage1(); // otherwise call function for quickly flickering candle (if its being blown on)
+  }
+}
+
+//If [IF1} is FLALSE (candle has been blown out) execute the following:
+//else if(flameState == 0){
+ // flameDetection();
+
+//}
+}
+
+
+void atRest(){ //program for steady flicker
+pwmStep = random(10,17); // happy with (17,24) //picks a random number of steps for the fade up/down
+  ledOut_Raw1 = random(-45,45); //picks a random value to increase the LEDs output by (via fading up or down)
+  ledOut_Raw2 = random(-55,55);
+  ledOut_Raw3 = random(-48,43);
+  ledOut_Step1 = ledOut_Raw1/pwmStep; //divides the random value by the number of steps in the fade to come up with the increase/decrease in vale per step
+  ledOut_Step2 = ledOut_Raw2/pwmStep;
+  ledOut_Step3 = ledOut_Raw3/pwmStep;
+  
+    for (int i=0; i<= pwmStep; i++){// runs the for loop the same number of times as as the pwmStep value
+    ledOut_Final1 = ledOut_Final1 + ledOut_Step1; //adss (or subtracts) the step value to each LED output each time the loops runs (once it completes the change is equal to the RAW value
+    ledOut_Final2 = ledOut_Final2 + ledOut_Step2;
+    ledOut_Final3 = ledOut_Final3 + ledOut_Step3;
+    if(ledOut_Final1 >230){ //the following limits the highest and lowest brightness the LEDS can reach (also keeps the value of the output from "overflowing" ie if the current output is 250 and 10 is added to it the new value will be 4)
+      ledOut_Final1 =230;
+    }
+    if(ledOut_Final2 >250){
+      ledOut_Final2 =200;
+    }
+    if(ledOut_Final3 >190){
+      ledOut_Final3 =190;
+    }
+    if(ledOut_Final1 < 20){
+      ledOut_Final1 = 20;
+    }
+     if(ledOut_Final2 < 40){
+      ledOut_Final2 = 40;
+    }
+     if(ledOut_Final3 < 10){
+      ledOut_Final3 = 10;
+    }
+    
+    analogWrite(ledPin[0], ledOut_Final1); //multiplies output value by dim ratio to dim the overall output by the dimming amount
+    delay(random(5,8)); //(5,7)
+    analogWrite(ledPin[1], ledOut_Final2);
+    delay(random(3,6)); //(3,5)
+    analogWrite(ledPin[2], ledOut_Final3);
+    delay(random(1,4)); //(1,5)
+    }
+}
+
+void stage1(){ //same as at rest, but with a different scale to operate within
+for(int y=0; y<=2; y++){ 
+  pwmStep = random(3,9);
+  ledOut_Raw1 = random(-75,75);
+  ledOut_Raw2 = random(-100,100);
+  ledOut_Raw3 = random(-150,150);
+  ledOut_Step1 = ledOut_Raw1/pwmStep;
+  ledOut_Step2 = ledOut_Raw2/pwmStep;
+  ledOut_Step3 = ledOut_Raw3/pwmStep;
+  
+  ledOut_Final1 = ledOut_Final1 + ledOut_Step1;
+  ledOut_Final2 = ledOut_Final2 + ledOut_Step2;
+  ledOut_Final3 = ledOut_Final3 + ledOut_Step3;
+  
+  if(ledOut_Final1 >80){
+  ledOut_Final1 =80;
+  }
+  if(ledOut_Final1 < 2){
+  ledOut_Final1 = 2;
+  }
+  
+  if(ledOut_Final2 > 60){
+  ledOut_Final2 = 60;
+  }
+  if(ledOut_Final2 < 10){
+  ledOut_Final2 = 10;
+  }
+  
+  if(ledOut_Final3 > 80){
+  ledOut_Final3 = 40;
+  }
+  if(ledOut_Final3 < 10){
+  ledOut_Final3 = 2;
+  }
+    analogWrite(ledPin[0], ledOut_Final1);
+    delay(random(5,8)); //(5,7)
+    analogWrite(ledPin[1], ledOut_Final2);
+    delay(random(3,6)); //(3,5)
+    analogWrite(ledPin[2], ledOut_Final3);
+    delay(random(1,4)); //(1,5)
+    }
+}
+
+void flameDetection(){
+  temp1 = analogRead(1); //read temp
+  delay(500); //wait 500ms
+  temp2 = analogRead(1); //read temp again
+  if(temp1 - 1 >= temp2){ //if 1st temp is less than 2nd temp
+    delay(300); //wait 300ms
+    temp3 = analogRead(1); //read temp a third time
+    if (temp2 - 1 >= temp3){ //if 2nd temp is less than 3rd temp
+      flameState = 1;
+    }
+      else{ //if the above conditions aren't met
+        temp4 = analogRead(1); //read temp a 4th time
+        if (temp1 - 2 >= temp4){ //if 4th temp is less than 1st temp minus 2
+          flameState = 1;
+        }
+      }
+    }
+}
