@@ -9,7 +9,7 @@ DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCL
 LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
+//Delcaration of Variables
 int ledPin[]={3}; //Output Pins for the Yellow LEDs; add Digital output pin numbers to the array for additional LEDs
 int windSensor=3; //Analog Pin that Wind Sensor output is connected to
 int hallSensor=2; //Analog Pin that Hall Sensor output is connected to
